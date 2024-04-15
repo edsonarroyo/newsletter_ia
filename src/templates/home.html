@@ -1,0 +1,312 @@
+{% extends './base.html' %}
+
+{% block title %}Creador de Newsletter{% endblock %}
+{% block customCSS %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+{% endblock %}
+
+{% block body %}
+<!-- Parte izquierda dividida por la mitad verticalmente -->
+    <div style="width: 50vw; flex: 1; display: flex; flex-direction: column; border-right: 4px solid #096ea5;">
+
+        <!-- Parte superior de la parte izquierda -->
+        <div style="display: flex; align-items: center; margin-bottom: 20px; border-bottom: 3px solid #096ea5;">
+            <img src="https://www.eluniversal.com.mx/pf/resources/website/eluniversal/logo-eluniversal.svg?d=588" alt="el universal" style="width: 200px; height: 50px; margin-left: 20px; ">
+        </div>
+
+        <!-- Selección de fechas -->
+        <div style="display: flex; flex-direction: column; margin-left: 20px; height: 150px;">
+            <h2 style="margin-top: 10px;">CREADOR DE NEWSLETTERS</h2>
+            <form action="/extraer_notas" method="post" style="margin: 16px;">
+                <label for="fecha_inicio"><strong>Fecha de inicio:</strong></label>
+                <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio }}" required>
+
+                <label for="fecha_fin" style="margin-left: 20px;"><strong>Fecha de fin:</strong></label>
+                <input type="date" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin }}" required>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <button type="submit" style="background-color: #73c366; color: white; border: none; padding: 10px; cursor: pointer; width: 125px; margin-left: 30px;">Buscar Notas</button>
+            </form>
+        </div>
+
+        <!-- Tabla con las notas -->
+        <div style="flex: 1; padding: 10px; margin-left: 20px; margin-right: 20px;">
+            {% if notas %}
+            <form action="/accion_notas" method="post" >
+            	<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; justify-content: center; align-items: center; margin-top: 10px; margin-bottom: 10px; width: 40px; height: 40px; border-radius: 10px; text-align: center; border: 2px solid">
+                        <span id="contadorNotas" style="color:#c1c1c1; font-weight: bold; font-size: 18px;">0/4</span>
+                    </div>
+                    <button type="submit" id="procesarNotas" disabled style="background-color: #c1c1c1; color: white; border: none; padding: 10px; cursor: pointer; width: 125px;" onclick="mostrarCarga()">Procesar Notas</button>
+                </div>
+                <div class="scrollable-container" style="height: 590px; overflow-y: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th class="url-column">Id</th>
+                                <th>Imagen</th>
+                                <th>Artículo</th>
+                                <th>Sección</th>
+                                <th>Publicación</th>
+                                <th class="url-column">Url</th>
+                                <th class="url-column">Website</th>
+                                <th class="url-column">Url imagen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for nota in notas %}
+                                <tr>
+                                    <td class="url-column">{{ nota.id }}</td>
+                                    <td>
+                                        <input type="checkbox" id="{{ nota.url }}" name="notas_seleccionadas" value="{{ nota.seccion }}|{{ nota.titulo }}|{{ nota.url }}|{{ nota.website }}|{{ nota.image_url }}|{{ nota.image_description }}|{{ nota.id }}" onchange="actualizarContador()">
+                                    </td>
+                                    <td> <img src="{{ nota.image_url }}" alt="Imagen" style="width: 100px; height: 75px;"></td>
+                                    <td>{{ nota.titulo }}</td>
+                                    <td>{{ nota.seccion }}</td>                                
+                                    <td>{{ nota.publish_date }}</td>
+                                    <td class="url-column">{{ nota.url }}</td>
+                                    <td class="url-column">{{ nota.website }}</td>
+                                    <td class="url-column">{{ nota.image_url }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="5" style="height: 5px;"></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                </div>
+
+            </form>
+            {% else %}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; justify-content: center; align-items: center; margin-top: 10px; margin-bottom: 10px; width: 40px; height: 40px; border-radius: 10px; text-align: center; border: 2px solid #c1c1c1">
+                        <span style="color:#c1c1c1; font-weight: bold; font-size: 18px;">0/4</span>
+                    </div>
+                    <button type="submit" disabled style="background-color: #c1c1c1; color: white; border: none; padding: 10px; cursor: pointer; width: 125px;">Procesar Notas</button>
+                </div>
+                <div class="scrollable-container" style="height: 650px; overflow-y: auto;">
+
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pantalla de Proceso de datos -->
+        <div id="carga" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white; background-color: ##303131; padding: 20px;">
+                <p>Procesando notas...</p>                
+                <img src="https://links.eluniversal.com.mx/custloads/793987234/md_10865.gif">
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Parte derecha -->
+    <div style="width: 50vw; flex: 1; display: flex; flex-direction: column;">
+
+        <div style="display: flex; justify-content: center; align-items: middle; margin-bottom: 20px; border-bottom: 3px solid #ff6701;">
+            <img src="https://www.dedinero.com.mx/pf/resources/website/dedinero/logo-dedinero.svg?d=588" alt="DeDinero" style="width: 200px; height: 50px; margin-left: 20px; ">
+        </div>        
+        {% if newsletters %}
+        <div style="display: flex; flex-direction: column; margin-left: 20px; margin-right: 20px; height: 150px;">
+            <h2 style="margin-top: 10px;">NOTAS SELECCIONADAS</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="margin-left: 30px;">
+                    <h4 style="margin: 0px;">Da click y arrastra para ordenar tus notas.</h4><br>
+                    Primera nota = Nota pricipal.<br>
+                    Subsecuntes = Nota secundarias.
+                </div>
+                <div style="margin-right: 30px;">
+                    <h4 style="margin: 0px;">Elige un título y resumen personalizado.</h4><br>
+                    <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: #C1C1C1C1; margin-right: 5px;"></span> <strong> SIN SELECCIÓN </strong> <br>
+                    <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: #73c366; margin-right: 5px;"></span> <strong> SELECCIÓN COMPLETA</strong>
+                </div>
+            </div> 
+        </div>
+        <div style="margin-left: 20px; margin-right: 20px;">
+            <form id="newsletterForm" action="/pvnewsletters" method="post" target="_blank">
+            	<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 11px; border-bottom: 2px solid #c1c1c1;">
+                    <div style="display: flex; justify-content: center; align-items: center; margin-top: 10px; margin-bottom: 10px; width: 40px; height: 40px;">                        
+                    </div>
+                    <button type="button" onclick="setSelectValue(); document.getElementById('newsletterForm').submit(); " style="background-color: #73c366; color: white; border: none; padding: 10px; cursor: pointer; width: 175px; margin-left: 30px;">Vista previa de Newsletter</button>
+                </div>                    
+                <div id="contenedor-notas">
+                    {% for nota in newsletters %}
+                    <div class="nota-container sortable" style="margin-bottom: 20px;" data-seccion="{{ nota.seccion }}" data-url="{{ nota.url }}" data-website ="{{nota.website}}" data-image_url="{{ nota.image_url }}" data-image_description="{{ nota.image_description }}" data-id="{{ nota.id }}"> 
+                        <div class="nota-header">
+                            <table>
+                                <tr>
+                                    <td style="width: 100px; text-align: center; vertical-align: middle;"><img src="{{ nota.image_url }}" alt="Imagen" style="width: 100px; height: 75px;"></td>
+                                    <td style="width: 500px; text-align: center; vertical-align: middle;"><div class="titulo">{{ nota.titulo }}</div></td>
+                                    <td style="width: 160px; text-align: center; vertical-align: middle;"><div class="seccion">{{ nota.seccion }}</div></td>
+                                    <td style="width: 20px; text-align: left; vertical-align: top;"><div><span class="selecciones" id="seleccion-{{ nota.id }}"; style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: #C1C1C1C1; margin-right: 5px;"></span></div></td>
+                                </tr>                            
+                            </table>
+                            <table>
+                                <tr>
+                                    <td style="background-color:#00639b; text-align: center; vertical-align: top; color:#ffffff;">
+                                        <details class="title-details" id="title-{{ nota.id }}" onclick="expandirDetalle('{{ nota.id }}', 'title')">
+                                            <summary>Título</summary>
+                                            <div class="title-container" style="height: 300px; width: 40vw; margin: 20px; display: flex; flex-direction: column; align-items: flex-start; overflow-y: auto;">
+                                                <table>
+                                                    <tbody>
+                                                        {% for titulo in [nota.titulo1, nota.titulo2, nota.titulo3] %}
+                                                        <tr>
+                                                            <td >
+                                                                <label>
+                                                                    <input type="radio" name="titulo{{ nota.id }}" value="{{ titulo }}" onchange="actualizarSeleccion('{{ nota.id }}')">
+                                                                    {{ titulo }}
+                                                                </label>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colspan="5" style="height: 5px;"></td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </details>
+                                    </td>
+                                    <td style="background-color:#404040; text-align: center; vertical-align: top; color:#ffffff">
+                                        <details class="resumen-details" id="resumen-{{ nota.id }}" onclick="expandirDetalle('{{ nota.id }}', 'resumen')">
+                                            <summary>Resumen</summary>
+                                            <div class="resumen-container" style="height: 400px; width: 40vw; margin: 20px; flex:1;display: flex; flex-direction: column; align-items: flex-start; overflow-y: auto;">
+                                                <table>
+                                                    <tbody>
+                                                        {% for resumen in [nota.resumen1, nota.resumen2, nota.resumen3] %}
+                                                        <tr>
+                                                            <td >
+                                                                <label>
+                                                                    <input type="radio" name="resumen{{ nota.id }}" value="{{ resumen }}" onchange="actualizarSeleccion('{{ nota.id }}')">
+                                                                    {{ resumen }}
+                                                                </label>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colspan="5" style="height: 5px;"></td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </details>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>            
+                <input type="hidden" name="resumen_seleccionado" id="resumenSeleccionado" value="">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 11px; border-bottom: 2px solid #c1c1c1;">
+                    <div style="display: flex; justify-content: center; align-items: center; margin-top: 10px; margin-bottom: 10px; width: 40px; height: 40px;">                        
+                    </div>
+                    <button type="button" onclick="setSelectValue(); document.getElementById('newsletterForm').submit();" style="background-color: #73c366; color: white; border: none; padding: 10px; cursor: pointer; width: 175px; margin-left: 30px;" >Vista previa de Newsletter</button>
+                </div> 
+            </form>
+        </div>
+    {% else %}
+        <div style="margin-left: 20px; margin-right: 20px; text-align: center; vertical-align: middle;">
+            <h2 style="margin-top: 10px;">BIENVENIDO AL CREADOR <br> DE NEWSLETTER CON IA</h2>
+            <h4 style="color:gray">Genera un newsletter en 3 sencillos pasos</h4>
+            <table>
+                <tr><td style="background-color:#bce3f4; text-align: center; vertical-align: middle;"><h3>1.- Selecciona el periodo de tiempo.</h3></td></tr>
+                <tr><td style="background-color:#ffffff; text-align: center; vertical-align: middle;"><h3>2.- Elije 4 notas para el newsletter.</h3></td></tr>
+                <tr><td style="background-color:#bce3f4; text-align: center; vertical-align: middle;"><h3>3.- Encuentra el mejor título y resumen.</h3></td></tr>
+            </table>
+        </div>
+    {% endif %}
+    </div>
+
+
+    <script>
+        function mostrarCarga() {
+            document.getElementById('carga').style.display = 'block';
+        }
+
+        function actualizarContador() {
+            var checkboxes = document.querySelectorAll('input[name="notas_seleccionadas"]:checked');
+            var contadorSpan = document.getElementById('contadorNotas');
+            contadorSpan.textContent = checkboxes.length + "/4";
+            contadorSpan.style.color = checkboxes.length !== 4 ? '#c1c1c1' : '#73c366';            
+
+            // Habilitar el botón si se seleccionan exactamente 4 notas
+            var procesarNotas = document.getElementById('procesarNotas');
+            procesarNotas.disabled = checkboxes.length !== 4;
+            procesarNotas.style.backgroundColor = procesarNotas.disabled ? '#c1c1c1' : '#73c366';
+        }
+
+      
+         // Inicializa Sortable en el contenedor principal de las notas
+        new Sortable(document.getElementById('contenedor-notas'), {
+            animation: 150, // Duración de la animación en milisegundos
+            ghostClass: 'sortable-ghost', // Clase CSS del elemento en movimiento
+        });
+
+        function expandirDetalle(notaId, tipo) {
+
+            //cerrar titulos
+            var detallesTitulos = document.querySelectorAll('.title-details[open]');
+            detallesTitulos.forEach(detalle => {
+                if (detalle.id == 'title-' + notaId) {
+                    detalle.open = false;
+                }
+            });
+
+
+            //cerrar resumenes
+            var detallesResumenes = document.querySelectorAll('.resumen-details[open]');
+            detallesResumenes.forEach(detalle => {
+                if (detalle.id == 'resumen-' + notaId) {
+                    detalle.open = false;
+                }
+            });
+
+        }
+
+        function actualizarSeleccion(notaId) {
+            var resumenRadio = document.querySelector('input[name="resumen' + notaId + '"]:checked');
+            var tituloRadio = document.querySelector('input[name="titulo' + notaId + '"]:checked');
+            var span = document.getElementById('seleccion-' + notaId);
+
+            if (resumenRadio && tituloRadio) {
+                span.style.backgroundColor = '#73c366'; // Verde
+            } else {
+                span.style.backgroundColor = '#C1C1C1'; // Gris
+            }
+        }
+
+        function setSelectValue() {
+            var resumenesSeleccionados = [];
+            var notasContainer = document.getElementById('contenedor-notas');
+            var notasOrdenadas = notasContainer.getElementsByClassName('nota-container');
+            
+            for (var i = 0; i < notasOrdenadas.length; i++) {
+                var nota = notasOrdenadas[i];
+                var resumenRadio = nota.querySelector('input[name^="resumen"]:checked');
+                var resumen = resumenRadio ? resumenRadio.value : null;
+
+                var tituloRadio = nota.querySelector('input[name^="titulo"]:checked');
+                var titulo = tituloRadio ? tituloRadio.value : null;
+
+                var datosNota = {
+                    seccion: nota.getAttribute('data-seccion'),
+                    titulo: titulo,
+                    url: nota.getAttribute('data-url'),
+                    website: nota.getAttribute('data-website'),
+                    image_url: nota.getAttribute('data-image_url'),
+                    image_description: nota.getAttribute('data-image_description'),
+                    id: nota.getAttribute('data-id'),
+                    resumen: resumen
+                };
+                resumenesSeleccionados.push(datosNota);                
+            }
+            document.getElementById('resumenSeleccionado').value = JSON.stringify(resumenesSeleccionados);
+        }
+
+    </script>
+{% endblock %}

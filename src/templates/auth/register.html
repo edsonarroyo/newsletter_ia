@@ -1,0 +1,53 @@
+{% extends './base.html' %}
+
+{% block title %}Registrar usuarios{% endblock %}
+
+{% block customCSS %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <section id="content">
+        <form action="/register" method="POST">
+            <h1>Registro de usuarios</h1>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                <br />
+                {% for message in messages %}
+                    <div class="alert alert-primary alert-dismissible" role="alert">
+                        <strong>{{ message }}</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+                {% endif %}
+            {% endwith %}    
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div>
+                <input type="text" placeholder="Email" required="" id="email" name="email"/>
+            </div>
+            <div>
+                <input type="password" placeholder="Password" required="" id="password" name="password"/>
+            </div>
+            <div>                
+                <select id="perfil" name="perfil" required="">
+                    <option value="" disabled selected>Selecciona un perfil</option>
+                    {% for perfil in perfiles %}
+                        <option value="{{ perfil.id }}">{{ perfil.type_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <input type="submit" value="Register" />              
+            </div>
+        </form><!-- form -->
+    </section><!-- content -->
+</div><!-- container -->
+
+<script>
+    console.log({{ perfiles | tojson }});
+</script>
+
+{% endblock %}
+
+

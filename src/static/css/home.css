@@ -1,0 +1,66 @@
+ th.url-column, td.url-column {
+        display: none;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {        
+        padding: 8px;
+        text-align: left;
+    }
+
+    th {
+        background-color: #404040; /* Azul más oscuro para encabezados */
+        color: #fff; /* Texto en blanco para encabezados */
+    }
+
+    tr:nth-child(even) {
+        background-color: #e5eff5; /* Azul más claro para filas pares */
+    }
+
+    tr:nth-child(odd) {
+        background-color: #ffffff; /* Azul intermedio para filas impares */
+    }
+
+    tr:hover {
+        background-color: #b3e1fc; /* Azul más oscuro al pasar el ratón sobre la fila */
+    }
+
+    input[type="checkbox"] {
+        margin-right: 5px;
+    }
+
+    input[type="date"] {
+        background-color: #4d92b9; /* Establece el color de fondo */
+        color: white; /* Establece el color del texto */
+        border: none; /* Quita el borde por defecto */
+        padding: 8px; /* Ajusta el relleno */
+        border-radius: 4px; /* Ajusta el radio del borde */
+    }
+
+    .scrollable-container {
+        overflow-y: auto;
+        max-height: calc(80vh - 32px); /* Ajusta la altura según tus necesidades */
+        border-top: 1px solid #ccc;
+        padding: 10px;
+    }
+
+    .title-container label {
+            color: black; /* Color de texto negro */
+        }
+    .resumen-container label {
+            color: black; /* Color de texto negro */
+        }
+
+    
+    .titulo {
+    font-weight: bold; /* Resaltar el título */
+    white-space: pre-wrap; /* Permitir múltiples líneas */
+    }
+
+    .seccion {
+    font-weight: bold; /* Resaltar el título */
+    white-space: pre-wrap; /* Permitir múltiples líneas */
+    }
